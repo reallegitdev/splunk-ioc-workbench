@@ -132,8 +132,13 @@ function validateTemplates() {
 }
 
 function updateTimeRangeVisibility() {
-  const isCustom = timeRange.value === "custom";
-  customTimeRangeFields.classList.toggle("hidden", !isCustom);
+  const selectedValue = timeRange.value;
+
+  if (selectedValue === "custom") {
+    customTimeRangeFields.classList.remove("hidden");
+  } else {
+    customTimeRangeFields.classList.add("hidden");
+  }
 }
 
 function getTimeRangeConfig() {
