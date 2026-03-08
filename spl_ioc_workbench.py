@@ -1,24 +1,31 @@
 #!/usr/bin/env python3
 
 import ipaddress
-import re
+from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, messagebox
 
 
-TRAFFIC_TEMPLATE = r'''| tstats `summariesonly` values(All_Traffic.dest_port), values(All_Traffic.signature), values(All_Traffic.protocol), values(All_Traffic.app), values(All_Traffic.tag), values(All_Traffic.direction), values(All_Traffic.action), values(All_Traffic.rule), values(All_Traffic.bytes_in), values(All_Traffic.bytes_out) values(sourcetype) as sourcetype min(_time) as first_seen, max(_time) as last_seen, count from datamodel="Network_Traffic" Where nodename="All_Traffic" earliest=-30d latest=now All_Traffic.src IN ({{IOC_LIST}}) OR All_Traffic.dest IN ({{IOC_LIST}}) by All_Traffic.src All_Traffic.dest All_Traffic.action
-| rename values(All_Traffic.*) as *
-| eval last_seen = strftime(last_seen, "%b %d, %H:%M %p")
-| eval first_seen = strftime(first_seen, "%b %d, %H:%M %p")'''
+BASE_DIR = Path(__file__).resolve().parent
+TEMPLATE_DIR = BASE_DIR / "templates"
 
-DNS_TEMPLATE = r'''| tstats `summariesonly` count earliest(_time) as firstSeen latest(_time) as lastSeen values(sourcetype) as sourcetype, values(DNS.src_category) as src_category values(DNS.answer) as answer, values(DNS.reply_code) as reply_code, values(DNS.dest) as dest values(DNS.record_type) as record_type values(DNS.dest_category) as dest_category from datamodel=Network_Resolution.DNS where earliest=-30d latest=now DNS.query IN ({{IOC_LIST}}) by DNS.query DNS.src
-| convert ctime(*Seen)
-| `drop_dm_object_name(DNS)`'''
+TEMPLATE_FILES = {
+    "traffic": TEMPLATE_DIR / "traffic.tpl",
+    "dns": TEMPLATE_DIR / "dns.tpl",
+    "web": TEMPLATE_DIR / "web.tpl",
+}
 
-WEB_TEMPLATE = r'''| tstats `summariesonly` c as count min(_time) as first_seen, max(_time) as last_seen, values(Web.user), values(Web.uri_path), values(Web.http_method), values(Web.action), values(Web.status), values(Web.uri) values(Web.http_referrer) values(Web.http_user_agent) from datamodel=Web where nodename=Web earliest=-30d latest=now Web.url IN ({{IOC_LIST}}) by Web.url Web.src Web.dest
-| rename values(Web.*) as *, Web.* as *
-| eval last_seen = strftime (last_seen, "%b %d, %H:%M %p")
-| eval first_seen = strftime (first_seen, "%b %d, %H:%M %p")'''
+
+def load_template(template_name: str) -> str:
+    template_path = TEMPLATE_FILES.get(template_name)
+
+    if template_path is None:
+        raise ValueError(f"Unknown template requested: {template_name}")
+
+    if not template_path.exists():
+        raise FileNotFoundError(f"Template file not found: {template_path}")
+
+    return template_path.read_text(encoding="utf-8")
 
 
 def is_ip(value: str) -> bool:
@@ -74,13 +81,6 @@ def render_template(template: str, replacement: str) -> str:
     return template.replace("{{IOC_LIST}}", replacement)
 
 
-def set_text(widget: tk.Text, value: str) -> None:
-    widget.config(state="normal")
-    widget.delete("1.0", tk.END)
-    widget.insert("1.0", value)
-    widget.config(state="normal")
-
-
 def get_clean_text(widget: tk.Text) -> str:
     return widget.get("1.0", tk.END).strip()
 
@@ -116,6 +116,15 @@ def generate_searches() -> None:
         messagebox.showerror("Missing IOC list", "Paste at least one IP or domain.")
         return
 
+    try:
+        traffic_template = load_template("traffic")
+        dns_template = load_template("dns")
+        web_template = load_template("web")
+    except Exception as exc:
+        messagebox.showerror("Template Error", str(exc))
+        status_var.set("Failed to load one or more templates.")
+        return
+
     item_type = classify_items(items)
     detected_type_var.set(f"Detected type: {item_type}")
 
@@ -126,12 +135,17 @@ def generate_searches() -> None:
     ip_items = [x for x in items if is_ip(x)]
     domain_items = [x for x in items if not is_ip(x)]
 
-    if ip_items:
-        traffic_output = render_template(TRAFFIC_TEMPLATE, format_ip_items(ip_items))
+    try:
+        if ip_items:
+            traffic_output = render_template(traffic_template, format_ip_items(ip_items))
 
-    if domain_items:
-        dns_output = render_template(DNS_TEMPLATE, format_domain_items(domain_items))
-        web_output = render_template(WEB_TEMPLATE, format_domain_items(domain_items))
+        if domain_items:
+            dns_output = render_template(dns_template, format_domain_items(domain_items))
+            web_output = render_template(web_template, format_domain_items(domain_items))
+    except Exception as exc:
+        messagebox.showerror("Render Error", str(exc))
+        status_var.set("Failed to render one or more searches.")
+        return
 
     for box, content in (
         (traffic_box, traffic_output),
@@ -162,23 +176,29 @@ def load_templates_window() -> None:
 
     info = ttk.Label(
         outer,
-        text="These are the built-in templates. Edit the script directly if you want permanent changes.",
+        text="These templates are loaded from disk. Edit the template files manually for permanent changes.",
     )
     info.pack(anchor="w", pady=(0, 10))
 
     notebook = ttk.Notebook(outer)
     notebook.pack(fill="both", expand=True)
 
-    for title, content in (
-        ("Traffic Template", TRAFFIC_TEMPLATE),
-        ("DNS Template", DNS_TEMPLATE),
-        ("Web Template", WEB_TEMPLATE),
+    for title, template_name in (
+        ("Traffic Template", "traffic"),
+        ("DNS Template", "dns"),
+        ("Web Template", "web"),
     ):
         frame = ttk.Frame(notebook)
         notebook.add(frame, text=title)
 
         text = tk.Text(frame, wrap="word", font=("Courier", 10))
         text.pack(fill="both", expand=True)
+
+        try:
+            content = load_template(template_name)
+        except Exception as exc:
+            content = f"Error loading template:\n\n{exc}"
+
         text.insert("1.0", content)
         text.config(state="disabled")
 
