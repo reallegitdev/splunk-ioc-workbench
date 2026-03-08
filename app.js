@@ -2,6 +2,12 @@ const iocInput = document.getElementById("iocInput");
 const detectedType = document.getElementById("detectedType");
 const statusMessage = document.getElementById("statusMessage");
 
+const timeRange = document.getElementById("timeRange");
+const customTimeRangeFields = document.getElementById("customTimeRangeFields");
+const customEarliest = document.getElementById("customEarliest");
+const customLatest = document.getElementById("customLatest");
+const selectedRangeLabel = document.getElementById("selectedRangeLabel");
+
 const trafficOutput = document.getElementById("trafficOutput");
 const dnsOutput = document.getElementById("dnsOutput");
 const webOutput = document.getElementById("webOutput");
@@ -68,12 +74,20 @@ function formatDomainItems(items) {
   return items.map((item) => `"*${item}*"`).join(", ");
 }
 
-function renderTemplate(template, replacement) {
-  if (!template || !template.includes("{{IOC_LIST}}")) {
-    throw new Error("Template is missing {{IOC_LIST}} placeholder.");
+function renderTemplate(template, replacements) {
+  let rendered = template;
+
+  for (const [placeholder, value] of Object.entries(replacements)) {
+    const token = `{{${placeholder}}}`;
+
+    if (!rendered.includes(token)) {
+      throw new Error(`Template is missing ${token} placeholder.`);
+    }
+
+    rendered = rendered.replaceAll(token, value);
   }
 
-  return template.replaceAll("{{IOC_LIST}}", replacement);
+  return rendered;
 }
 
 function updateCounts(items, ips, domains) {
@@ -101,8 +115,8 @@ function copyOutput(targetId, label) {
   }
 
   navigator.clipboard.writeText(source.value)
-    .then(() => setStatus(`Copied ${label} search to clipboard.`))
-    .catch(() => setStatus(`Clipboard copy failed for ${label}.`));
+  .then(() => setStatus(`Copied ${label} search to clipboard.`))
+  .catch(() => setStatus(`Clipboard copy failed for ${label}.`));
 }
 
 function validateTemplates() {
@@ -115,6 +129,42 @@ function validateTemplates() {
   if (missing.length) {
     throw new Error(`Missing template files: ${missing.join(", ")}`);
   }
+}
+
+function updateTimeRangeVisibility() {
+  const isCustom = timeRange.value === "custom";
+  customTimeRangeFields.classList.toggle("hidden", !isCustom);
+}
+
+function getTimeRangeConfig() {
+  const selectedText = timeRange.options[timeRange.selectedIndex].text;
+  const selectedValue = timeRange.value;
+
+  if (selectedValue === "none") {
+    return {
+      label: "None",
+      clause: ""
+    };
+  }
+
+  if (selectedValue === "custom") {
+    const earliest = customEarliest.value.trim();
+    const latest = customLatest.value.trim();
+
+    if (!earliest || !latest) {
+      throw new Error("Custom time range requires both Earliest and Latest values.");
+    }
+
+    return {
+      label: `Custom (${earliest} to ${latest})`,
+      clause: `earliest=${earliest} latest=${latest}`
+    };
+  }
+
+  return {
+    label: selectedText,
+    clause: selectedValue
+  };
 }
 
 function generateSearches() {
@@ -134,6 +184,15 @@ function generateSearches() {
     return;
   }
 
+  let timeConfig;
+  try {
+    timeConfig = getTimeRangeConfig();
+  } catch (error) {
+    setStatus(error.message);
+    alert(error.message);
+    return;
+  }
+
   const ips = items.filter(isIp);
   const domains = items.filter((item) => !isIp(item));
 
@@ -141,30 +200,40 @@ function generateSearches() {
 
   const itemType = classifyItems(items);
   detectedType.textContent = `Detected type: ${itemType}`;
+  selectedRangeLabel.textContent = timeConfig.label;
 
   try {
     trafficOutput.value = ips.length
-      ? renderTemplate(window.TRAFFIC_TEMPLATE, formatIpItems(ips))
-      : "";
+    ? renderTemplate(window.TRAFFIC_TEMPLATE, {
+      IOC_LIST: formatIpItems(ips),
+                     TIME_RANGE: timeConfig.clause
+    })
+    : "";
 
     dnsOutput.value = domains.length
-      ? renderTemplate(window.DNS_TEMPLATE, formatDomainItems(domains))
-      : "";
+    ? renderTemplate(window.DNS_TEMPLATE, {
+      IOC_LIST: formatDomainItems(domains),
+                     TIME_RANGE: timeConfig.clause
+    })
+    : "";
 
     webOutput.value = domains.length
-      ? renderTemplate(window.WEB_TEMPLATE, formatDomainItems(domains))
-      : "";
+    ? renderTemplate(window.WEB_TEMPLATE, {
+      IOC_LIST: formatDomainItems(domains),
+                     TIME_RANGE: timeConfig.clause
+    })
+    : "";
   } catch (error) {
     setStatus(`Render error: ${error.message}`);
     return;
   }
 
   if (ips.length && domains.length) {
-    setStatus("Generated traffic for IPs and DNS/Web for domains.");
+    setStatus(`Generated traffic for IPs and DNS/Web for domains using ${timeConfig.label.toLowerCase()}.`);
   } else if (ips.length) {
-    setStatus("Generated traffic search from IP IOC list.");
+    setStatus(`Generated traffic search from IP IOC list using ${timeConfig.label.toLowerCase()}.`);
   } else if (domains.length) {
-    setStatus("Generated DNS and Web searches from domain IOC list.");
+    setStatus(`Generated DNS and Web searches from domain IOC list using ${timeConfig.label.toLowerCase()}.`);
   } else {
     setStatus("No valid items found.");
   }
@@ -172,8 +241,16 @@ function generateSearches() {
 
 function clearAll() {
   iocInput.value = "";
+  customEarliest.value = "";
+  customLatest.value = "";
+  timeRange.value = "earliest=-30m latest=now";
+
+  updateTimeRangeVisibility();
   clearOutputs();
+
   detectedType.textContent = "Detected type: n/a";
+  selectedRangeLabel.textContent = "Last 30 minutes";
+
   updateCounts([], [], []);
   setStatus("Cleared.");
 }
@@ -207,9 +284,13 @@ function setupCopyButtons() {
   });
 }
 
+timeRange.addEventListener("change", updateTimeRangeVisibility);
+
 generateBtn.addEventListener("click", generateSearches);
 clearBtn.addEventListener("click", clearAll);
 
 setupTabs();
 setupCopyButtons();
 updateCounts([], [], []);
+updateTimeRangeVisibility();
+selectedRangeLabel.textContent = timeRange.options[timeRange.selectedIndex].text;

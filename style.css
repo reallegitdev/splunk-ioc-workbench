@@ -108,13 +108,13 @@ textarea {
 }
 
 #iocInput {
-  min-height: 360px;
+min-height: 360px;
 }
 
 #trafficOutput,
 #dnsOutput,
 #webOutput {
-  min-height: 520px;
+min-height: 520px;
 }
 
 .button-row,
@@ -182,6 +182,34 @@ button.secondary:hover {
 
 .tab-panel.active {
   display: block;
+}
+
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+select,
+input {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #020617;
+  color: var(--text);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.95rem;
+}
+
+.custom-time-range {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.hidden {
+  display: none;
 }
 
 @media (max-width: 1100px) {

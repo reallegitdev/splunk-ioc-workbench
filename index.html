@@ -35,6 +35,40 @@
           placeholder="185.193.127.12&#10;evil-domain.com&#10;another-domain.net"
         ></textarea>
 
+        <div class="control-row">
+          <label for="timeRange"><strong>Time Range</strong></label>
+          <select id="timeRange">
+            <option value="none">None</option>
+            <option value="earliest=-15m latest=now">Last 15 minutes</option>
+            <option value="earliest=-30m latest=now" selected>Last 30 minutes</option>
+            <option value="earliest=-24h latest=now">Last 24 hours</option>
+            <option value="earliest=-7d latest=now">Last 7 days</option>
+            <option value="earliest=-30d latest=now">Last 30 days</option>
+            <option value="earliest=-90d latest=now">Last 90 days</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+
+        <div id="customTimeRangeFields" class="custom-time-range hidden">
+          <div class="control-row">
+            <label for="customEarliest"><strong>Earliest</strong></label>
+            <input
+              id="customEarliest"
+              type="text"
+              placeholder='-2h or "03/08/2026:00:00:00"'
+            />
+          </div>
+
+          <div class="control-row">
+            <label for="customLatest"><strong>Latest</strong></label>
+            <input
+              id="customLatest"
+              type="text"
+              placeholder='now or "03/08/2026:23:59:59"'
+            />
+          </div>
+        </div>
+
         <div class="button-row">
           <button id="generateBtn">Generate Searches</button>
           <button id="clearBtn" class="secondary">Clear</button>
@@ -44,6 +78,7 @@
           <div><strong>Total:</strong> <span id="totalCount">0</span></div>
           <div><strong>IPs:</strong> <span id="ipCount">0</span></div>
           <div><strong>Domains:</strong> <span id="domainCount">0</span></div>
+          <div><strong>Range:</strong> <span id="selectedRangeLabel">Last 30 minutes</span></div>
         </div>
       </section>
 
