@@ -1,67 +1,50 @@
 # SPL IOC Workbench
 
-A lightweight graphical tool for generating Splunk SPL searches from lists of Indicators of Compromise (IOCs).
+A lightweight, browser-based tool for generating Splunk SPL searches from lists of Indicators of Compromise (IOCs).
 
-The workbench allows analysts to quickly convert raw threat intelligence indicators (IP addresses and domains) into ready-to-run SPL searches targeting common Splunk data models such as:
+The SPL IOC Workbench allows analysts to quickly convert threat intelligence indicators such as IP addresses and domains into ready-to-run Splunk searches targeting common data models.
 
-- Network Traffic
-- DNS Resolution
-- Web
-
-The goal is to reduce manual search building and make IOC pivoting faster and more consistent across analysts.
+The application runs entirely in the browser and requires **no backend services, no installation, and no external dependencies**.
 
 ---
 
 ## Features
 
-- GUI-based workflow (no CLI required)
+- Browser-based graphical interface
+- Runs completely locally
+- No installation required
+- No backend server required
 - Paste multiple IOCs at once
 - Automatic IOC type detection
+- Deduplicates IOC lists
 - Generates searches for:
   - Network Traffic
   - DNS
   - Web
-- Deduplicates IOC lists
 - Copy searches directly to clipboard
-- Templates stored externally for easy modification
-- Read-only template loading for safety
+- Templates separated from application logic
 
 ---
 
-## Why This Exists
+## Security Model
 
-Threat intelligence feeds often provide long lists of indicators. Analysts frequently need to pivot those indicators into Splunk searches quickly to determine:
-
-- whether the environment has communicated with known malicious infrastructure
-- whether hosts have attempted resolution of suspicious domains
-- whether web traffic includes malicious URLs
-
-Manually building these searches is repetitive and error-prone.
-
-The SPL IOC Workbench automates the generation of these searches while keeping the logic transparent and editable.
-
----
-
-## Security Design
-
-The tool intentionally avoids modifying the local environment.
+This tool is designed to be safe to run in restricted environments.
 
 The application:
 
-- **reads templates**
-- **renders searches**
-- **displays results**
+- Runs entirely in the browser
+- Does not connect to external services
+- Does not modify local files
+- Does not execute system commands
+- Does not transmit data anywhere
 
-It does **not**:
+All logic executes locally within the browser.
 
-- modify templates
-- modify configuration
-- deploy searches to Splunk
-- write files automatically
+The application only performs:
 
-All permanent changes must be made manually by editing the template files.
-
-This design keeps the tool predictable and safe to run in sensitive environments.
+1. IOC normalization
+2. IOC type detection
+3. Template rendering
 
 ---
 
@@ -70,68 +53,74 @@ This design keeps the tool predictable and safe to run in sensitive environments
 
 splunk-ioc-workbench
 │
-├── workbench.py
-├── templates/
-│ ├── traffic.tpl
-│ ├── dns.tpl
-│ └── web.tpl
+├── index.html
+├── style.css
+├── app.js
 │
-├── README.md
-└── LICENSE
+├── templates/
+│ ├── traffic-template.js
+│ ├── dns-template.js
+│ └── web-template.js
+│
+└── README.md
 
 
-Templates contain the SPL used to generate searches.
+### index.html
 
-Example template placeholder:
+Defines the user interface layout.
+
+### style.css
+
+Handles visual styling of the application.
+
+### app.js
+
+Contains application logic including:
+
+- IOC parsing
+- IOC classification
+- search generation
+- tab handling
+- clipboard functionality
+
+### templates/
+
+Contains the Splunk search templates used to generate output.
+
+Each template file defines a global template variable that the application loads at runtime.
+
+Example placeholder used in templates:
 
 
 {{IOC_LIST}}
 
 
-The application replaces this placeholder with formatted indicators.
-
----
-
-## Requirements
-
-Python 3.10+
-
-Standard library only:
-
-- tkinter
-- ipaddress
-- pathlib
-
-No external dependencies are required.
+This placeholder is replaced with the formatted IOC list when generating searches.
 
 ---
 
 ## Running the Workbench
 
-Clone the repository:
+No installation is required.
+
+Simply open the application in a browser:
 
 
-git clone https://github.com/YOUR_USERNAME/splunk-ioc-workbench.git
-
-cd splunk-ioc-workbench
+index.html
 
 
-Run the application:
-
-
-python3 workbench.py
-
+Double-click the file or open it with your preferred browser.
 
 ---
 
-## Using the Tool
+## Usage
 
-1. Paste IP addresses or domains into the input box (one per line)
+1. Paste IP addresses or domains into the IOC input field (one per line)
 2. Click **Generate Searches**
-3. Review the generated searches in the tabs
+3. Review generated searches in the output tabs
 4. Copy searches into Splunk
 
-Example IOC list:
+Example input:
 
 
 185.193.127.12
@@ -139,11 +128,11 @@ Example IOC list:
 evil-domain.com
 
 
-The tool will automatically generate appropriate searches for:
+The application will generate:
 
-- traffic (IP indicators)
-- DNS (domain indicators)
-- web activity (domain indicators)
+- Network traffic searches for IP indicators
+- DNS searches for domain indicators
+- Web searches for domain indicators
 
 ---
 
@@ -154,36 +143,46 @@ Templates are stored in the `templates/` directory.
 Example:
 
 
-templates/traffic.tpl
+templates/traffic-template.js
 
 
-If you need to modify search logic, edit the template file directly.
+Each template file defines the SPL used to generate searches.
 
-For example:
+Example snippet:
 
 
 All_Traffic.src IN ({{IOC_LIST}})
 
 
-The workbench replaces `{{IOC_LIST}}` with the formatted indicator list.
+The application replaces `{{IOC_LIST}}` with the formatted indicator list during search generation.
 
-Restart the application after modifying templates.
+---
+
+## Design Goals
+
+This project was designed with several goals in mind:
+
+- Reduce repetitive manual search creation
+- Provide a simple interface usable by analysts at any skill level
+- Keep the application transparent and auditable
+- Avoid complex dependencies or backend services
+- Ensure the tool can run in restricted or offline environments
 
 ---
 
 ## Future Improvements
 
-Possible future enhancements:
+Potential enhancements may include:
 
-- additional IOC types (hashes, URLs)
-- configurable time ranges
-- dataset selection
-- additional Splunk data models
-- export search bundles
-- IOC enrichment
+- URL IOC support
+- File hash IOC support
+- Customizable time ranges
+- Additional Splunk data model support
+- Export options
+- Configurable templates
 
 ---
 
 ## Author
 
-Built as part of ongoing work on threat hunting and IOC operationalization workflows.
+Developed as part of ongoing work to streamline threat intelligence operational workflows and improve IOC-driven threat hunting.

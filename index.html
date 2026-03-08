@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPL IOC Workbench</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>SPL IOC Workbench</h1>
+        <p class="subtitle">Generate Splunk searches from IP and domain IOCs</p>
+      </div>
+
+      <div class="status-wrap">
+        <div id="detectedType" class="badge">Detected type: n/a</div>
+        <div id="statusMessage" class="status">
+          Paste IPs and/or domains, then click Generate Searches.
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel input-panel">
+        <div class="panel-header">
+          <h2>IOC Input</h2>
+          <span>One item per line</span>
+        </div>
+
+        <textarea
+          id="iocInput"
+          spellcheck="false"
+          placeholder="185.193.127.12&#10;evil-domain.com&#10;another-domain.net"
+        ></textarea>
+
+        <div class="button-row">
+          <button id="generateBtn">Generate Searches</button>
+          <button id="clearBtn" class="secondary">Clear</button>
+        </div>
+
+        <div class="summary-box">
+          <div><strong>Total:</strong> <span id="totalCount">0</span></div>
+          <div><strong>IPs:</strong> <span id="ipCount">0</span></div>
+          <div><strong>Domains:</strong> <span id="domainCount">0</span></div>
+        </div>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="tabs">
+          <button class="tab active" data-tab="traffic">Traffic</button>
+          <button class="tab" data-tab="dns">DNS</button>
+          <button class="tab" data-tab="web">Web</button>
+        </div>
+
+        <div class="tab-panel active" id="trafficPanel">
+          <div class="output-toolbar">
+            <span>Traffic Search</span>
+            <button class="secondary" data-copy-target="trafficOutput">Copy Traffic</button>
+          </div>
+          <textarea id="trafficOutput" readonly spellcheck="false"></textarea>
+        </div>
+
+        <div class="tab-panel" id="dnsPanel">
+          <div class="output-toolbar">
+            <span>DNS Search</span>
+            <button class="secondary" data-copy-target="dnsOutput">Copy DNS</button>
+          </div>
+          <textarea id="dnsOutput" readonly spellcheck="false"></textarea>
+        </div>
+
+        <div class="tab-panel" id="webPanel">
+          <div class="output-toolbar">
+            <span>Web Search</span>
+            <button class="secondary" data-copy-target="webOutput">Copy Web</button>
+          </div>
+          <textarea id="webOutput" readonly spellcheck="false"></textarea>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="templates/traffic-template.js"></script>
+  <script src="templates/dns-template.js"></script>
+  <script src="templates/web-template.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
