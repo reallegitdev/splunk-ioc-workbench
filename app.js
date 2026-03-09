@@ -37,20 +37,23 @@ function isIp(value) {
   return /^([a-fA-F0-9:]+)$/.test(trimmed) && trimmed.includes(":");
 }
 
+function refang(value) {
+  return value
+    .replace(/^hxxps?:\/\//i, (match) => (match.toLowerCase().startsWith("hxxps") ? "https://" : "http://"))
+    .replace(/\[\.\]|\(\.\)|\{\.\}/g, ".")
+    .replace(/\[(dot)\]|\((dot)\)|\{(dot)\}/gi, ".");
+}
+
 function parseUrlHost(value) {
-  const raw = value.trim();
+  const raw = refang(value.trim());
   if (!raw || isIp(raw)) return null;
 
-  const defanged = raw
-    .replace(/^hxxps?:\/\//i, (match) => match.toLowerCase().startsWith("hxxps") ? "https://" : "http://")
-    .replace(/\[\.\]/g, ".");
-
-  const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(defanged);
-  const shouldTryAsUrl = hasScheme || /[/?#]/.test(defanged) || (defanged.includes(":") && !defanged.includes(" "));
+  const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(raw);
+  const shouldTryAsUrl = hasScheme || /[/?#]/.test(raw) || (raw.includes(":") && !raw.includes(" "));
 
   if (!shouldTryAsUrl) return null;
 
-  const candidate = hasScheme ? defanged : `http://${defanged}`;
+  const candidate = hasScheme ? raw : `http://${raw}`;
 
   try {
     const parsed = new URL(candidate);
@@ -65,7 +68,7 @@ function normalizeItems(text) {
   const items = [];
 
   for (const line of text.split("\n")) {
-    const cleaned = line.trim().replace(/,$/, "");
+    const cleaned = refang(line.trim().replace(/,$/, ""));
     const value = parseUrlHost(cleaned) || cleaned;
     if (!value) continue;
 
