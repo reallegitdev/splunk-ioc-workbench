@@ -37,12 +37,36 @@ function isIp(value) {
   return /^([a-fA-F0-9:]+)$/.test(trimmed) && trimmed.includes(":");
 }
 
+function parseUrlHost(value) {
+  const raw = value.trim();
+  if (!raw || isIp(raw)) return null;
+
+  const defanged = raw
+    .replace(/^hxxps?:\/\//i, (match) => match.toLowerCase().startsWith("hxxps") ? "https://" : "http://")
+    .replace(/\[\.\]/g, ".");
+
+  const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(defanged);
+  const shouldTryAsUrl = hasScheme || /[/?#]/.test(defanged) || (defanged.includes(":") && !defanged.includes(" "));
+
+  if (!shouldTryAsUrl) return null;
+
+  const candidate = hasScheme ? defanged : `http://${defanged}`;
+
+  try {
+    const parsed = new URL(candidate);
+    return parsed.hostname.replace(/\.$/, "");
+  } catch {
+    return null;
+  }
+}
+
 function normalizeItems(text) {
   const seen = new Set();
   const items = [];
 
   for (const line of text.split("\n")) {
-    const value = line.trim().replace(/,$/, "");
+    const cleaned = line.trim().replace(/,$/, "");
+    const value = parseUrlHost(cleaned) || cleaned;
     if (!value) continue;
 
     if (!seen.has(value)) {
@@ -185,7 +209,7 @@ function generateSearches() {
   const items = normalizeItems(raw);
 
   if (!items.length) {
-    alert("Paste at least one IP or domain.");
+    alert("Paste at least one IP, domain, or URL.");
     return;
   }
 
@@ -234,11 +258,11 @@ function generateSearches() {
   }
 
   if (ips.length && domains.length) {
-    setStatus(`Generated traffic for IPs and DNS/Web for domains using ${timeConfig.label.toLowerCase()}.`);
+    setStatus(`Generated traffic for IPs and DNS/Web for domains/URLs using ${timeConfig.label.toLowerCase()}.`);
   } else if (ips.length) {
     setStatus(`Generated traffic search from IP IOC list using ${timeConfig.label.toLowerCase()}.`);
   } else if (domains.length) {
-    setStatus(`Generated DNS and Web searches from domain IOC list using ${timeConfig.label.toLowerCase()}.`);
+    setStatus(`Generated DNS and Web searches from domain/URL IOC list using ${timeConfig.label.toLowerCase()}.`);
   } else {
     setStatus("No valid items found.");
   }

@@ -11,13 +11,13 @@
     <header class="topbar">
       <div>
         <h1>SPL IOC Workbench</h1>
-        <p class="subtitle">Generate Splunk searches from IP and domain IOCs</p>
+        <p class="subtitle">Generate Splunk searches from IP, domain, and URL IOCs</p>
       </div>
 
       <div class="status-wrap">
         <div id="detectedType" class="badge">Detected type: n/a</div>
         <div id="statusMessage" class="status">
-          Paste IPs and/or domains, then click Generate Searches.
+          Paste IPs, domains, and/or URLs, then click Generate Searches.
         </div>
       </div>
     </header>
@@ -32,7 +32,7 @@
         <textarea
           id="iocInput"
           spellcheck="false"
-          placeholder="185.193.127.12&#10;evil-domain.com&#10;another-domain.net"
+          placeholder="185.193.127.12&#10;evil-domain.com&#10;https://another-domain.net/login"
         ></textarea>
 
         <div class="control-row">
