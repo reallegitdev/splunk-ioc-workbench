@@ -2,6 +2,8 @@
 
 A small browser-based tool for turning IOC lists into ready-to-run Splunk searches.
 
+**Live version:** https://reallegitdev.github.io/splunk-ioc-workbench/
+
 It runs entirely in the browser with no backend, no installation, and no external dependencies.
 
 ## What it does
