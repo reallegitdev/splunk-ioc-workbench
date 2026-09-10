@@ -98,7 +98,9 @@ function formatIpItems(items) {
 }
 
 function formatDomainItems(items) {
-  return items.map((item) => `"*${item}*"`).join(", ");
+  return items
+    .map((item, index) => `        ${index ? "OR " : ""}DNS.query="*${item}*"`)
+    .join("\n");
 }
 
 function formatWebDomainItems(items) {
