@@ -50,14 +50,14 @@
         </div>
 
         <div class="control-row">
-          <label for="matchMode"><strong>Matching</strong></label>
+          <label for="matchMode"><strong>Search Scope</strong></label>
           <select id="matchMode">
-            <option value="high_fidelity" selected>High fidelity</option>
-            <option value="include_broad">High fidelity + broader Web pivots</option>
-            <option value="broad">Broad host/domain matching</option>
+            <option value="high_fidelity" selected>Exact indicators only</option>
+            <option value="include_broad">Exact indicators + related host</option>
+            <option value="broad">Broad domain/host search</option>
           </select>
           <span class="field-help">
-            High fidelity keeps full URL paths for Web searches and exact host/domain queries for DNS.
+            Uses the IOC as provided. Full URLs stay full URLs, and domains or hostnames are searched exactly.
           </span>
         </div>
 
