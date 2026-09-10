@@ -101,6 +101,12 @@ function formatDomainItems(items) {
   return items.map((item) => `"*${item}*"`).join(", ");
 }
 
+function formatWebDomainItems(items) {
+  return items
+    .map((item, index) => `        ${index ? "OR " : ""}Web.url="*${item}*"`)
+    .join("\n");
+}
+
 function renderTemplate(template, replacements) {
   let rendered = template;
 
@@ -251,7 +257,7 @@ function generateSearches() {
 
     webOutput.value = domains.length
     ? renderTemplate(window.WEB_TEMPLATE, {
-      IOC_LIST: formatDomainItems(domains),
+      IOC_LIST: formatWebDomainItems(domains),
                      TIME_RANGE: timeConfig.clause
     })
     : "";
