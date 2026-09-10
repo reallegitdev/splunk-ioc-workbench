@@ -108,13 +108,11 @@ textarea {
 }
 
 #iocInput {
-min-height: 360px;
+  min-height: 360px;
 }
 
-#trafficOutput,
-#dnsOutput,
-#webOutput {
-min-height: 520px;
+.search-chunk textarea {
+  min-height: 420px;
 }
 
 .button-row,
@@ -124,6 +122,10 @@ min-height: 520px;
   align-items: center;
   margin-top: 12px;
   margin-bottom: 12px;
+}
+
+.output-toolbar {
+  justify-content: space-between;
 }
 
 button {
@@ -155,7 +157,8 @@ button.secondary:hover {
   border-top: 1px solid var(--border);
   padding-top: 14px;
   display: grid;
-  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
   color: var(--muted);
 }
 
@@ -203,9 +206,68 @@ input {
   font-size: 0.95rem;
 }
 
+.field-help {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
 .custom-time-range {
   margin-top: 4px;
   margin-bottom: 4px;
+}
+
+.validation-details {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.validation-details summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.validation-details pre {
+  margin: 12px 0 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  background: #020617;
+  border-radius: 10px;
+  color: var(--muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: "Cascadia Code", Consolas, Monaco, monospace;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.search-list {
+  display: grid;
+  gap: 18px;
+}
+
+.search-chunk {
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+}
+
+.search-chunk:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.empty-output {
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  padding: 20px;
+  text-align: center;
 }
 
 .hidden {
@@ -224,5 +286,16 @@ input {
   .status-wrap {
     min-width: 0;
     width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .summary-box {
+    grid-template-columns: 1fr;
+  }
+
+  .output-toolbar {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
