@@ -1,8 +1,8 @@
 # SPL IOC Workbench
 
-A lightweight, browser-based tool for generating Splunk SPL searches from lists of Indicators of Compromise (IOCs).
+A lightweight, browser-based tool for turning IOC lists into ready-to-run Splunk SPL searches.
 
-The SPL IOC Workbench allows analysts to quickly convert threat intelligence indicators such as IP addresses and domains into ready-to-run Splunk searches targeting common data models.
+SPL IOC Workbench is designed for analysts who need to move quickly from threat intelligence to hunting without manually rebuilding the same searches over and over. Paste indicators, choose a time range and search scope, and the Workbench generates searches for common Splunk data models.
 
 The application runs entirely in the browser and requires **no backend services, no installation, and no external dependencies**.
 
@@ -12,17 +12,27 @@ The application runs entirely in the browser and requires **no backend services,
 
 - Browser-based graphical interface
 - Runs completely locally
-- No installation required
-- No backend server required
-- Paste multiple IOCs at once
-- Automatic IOC type detection
-- Deduplicates IOC lists
+- No installation or backend server required
+- Accepts one IOC per line or raw `Type,Value,...` CSV rows
+- Refangs common defanged domains and URLs
+- Recognizes IP addresses, domains/hostnames, URLs, hashes, email addresses, filenames, paths, and scheduled-task values
+- Separates searchable indicators from recognized-but-unsupported values and rejected input
+- Deduplicates normalized indicators
+- Preserves full URL paths for higher-fidelity Web searches
+- Extracts hostnames from URLs for DNS searching
+- Provides three analyst-friendly Search Scope options:
+  - **Exact indicators only**
+  - **Exact indicators + related host**
+  - **Broad domain/host search**
+- Supports preset and custom time ranges
+- Automatically splits large searches into chunks of up to 50 indicators
 - Generates searches for:
   - Network Traffic
   - DNS
   - Web
-- Copy searches directly to clipboard
-- Templates separated from application logic
+- Displays validation and normalization details before the analyst runs the search
+- Provides independent copy controls for each generated search chunk
+- Keeps SPL templates separate from application logic
 
 ---
 
@@ -36,66 +46,86 @@ The application:
 - Does not connect to external services
 - Does not modify local files
 - Does not execute system commands
-- Does not transmit data anywhere
+- Does not transmit IOC data anywhere
 
-All logic executes locally within the browser.
-
-The application only performs:
-
-1. IOC normalization
-2. IOC type detection
-3. Template rendering
+All parsing, normalization, validation, and SPL generation happens locally in the browser.
 
 ---
 
-## Project Structure
+## Supported Input
 
+The simplest input format is one IOC per line:
 
-splunk-ioc-workbench
-│
-├── index.html
-├── style.css
-├── app.js
-│
-├── templates/
-│ ├── traffic-template.js
-│ ├── dns-template.js
-│ └── web-template.js
-│
-└── README.md
+```text
+185.193.127.12
+evil-domain.com
+https://another-domain.net/login
+```
 
+The Workbench also accepts raw CSV text when the first columns contain an IOC type and value, for example:
 
-### index.html
+```text
+Type,Value,Description
+Domain,evil-domain.com,Example domain
+URL,https://another-domain.net/login,Example URL
+SHA256,0123456789abcdef...,Example hash
+```
 
-Defines the user interface layout.
+For CSV input, paste the **raw CSV text** rather than a range of cells copied from Excel. Spreadsheet applications may place tabular clipboard data on the clipboard instead of the original comma-separated text.
 
-### style.css
+The Workbench currently generates searches from:
 
-Handles visual styling of the application.
+- IP addresses
+- Domains and hostnames
+- URLs
 
-### app.js
+Other recognized IOC types are reported in validation results but are not yet included in generated searches. These include hashes, email addresses, filenames, paths, and scheduled-task values.
 
-Contains application logic including:
+---
 
-- IOC parsing
-- IOC classification
-- search generation
-- tab handling
-- clipboard functionality
+## Search Scope
 
-### templates/
+The **Search Scope** control determines how broadly the Workbench expands domain, hostname, and URL indicators.
 
-Contains the Splunk search templates used to generate output.
+### Exact indicators only
 
-Each template file defines a global template variable that the application loads at runtime.
+Uses the highest-fidelity IOC available. Full URLs remain full URL targets for Web searches, while domains and hostnames are searched exactly. This is the default mode.
 
-Example placeholder used in templates:
+### Exact indicators + related host
 
+Keeps the exact IOC search and also adds the related hostname as a broader Web pivot.
 
-{{IOC_LIST}}
+### Broad domain/host search
 
+Uses wildcard host/domain matching to increase coverage when the analyst intentionally wants a wider search.
 
-This placeholder is replaced with the formatted IOC list when generating searches.
+For DNS searches, hostnames are derived from URLs because DNS telemetry does not contain URL paths.
+
+---
+
+## Large IOC Lists
+
+Generated searches are automatically split into chunks of up to **50 indicators**.
+
+Each chunk is rendered as a separate valid Splunk search with its own copy button. This keeps large campaign IOC sets manageable and avoids producing one oversized SPL statement.
+
+---
+
+## Validation
+
+After generation, the Workbench reports:
+
+- Input lines
+- IP count
+- Domain/hostname count
+- URL count
+- Recognized but unsupported values
+- Duplicates removed
+- Rejected input
+- Search targets remaining after normalization
+- Selected time range
+
+Validation details also identify rejected entries and unsupported IOC types so indicators do not silently disappear from the workflow.
 
 ---
 
@@ -103,83 +133,154 @@ This placeholder is replaced with the formatted IOC list when generating searche
 
 No installation is required.
 
-Simply open the application in a browser:
+Open:
 
-
+```text
 index.html
+```
 
+in a modern browser.
 
-Double-click the file or open it with your preferred browser.
+Because the application is entirely client-side, it can also be copied to an offline or restricted workstation and run locally.
 
 ---
 
 ## Usage
 
-1. Paste IP addresses or domains into the IOC input field (one per line)
-2. Click **Generate Searches**
-3. Review generated searches in the output tabs
-4. Copy searches into Splunk
+1. Paste IOC values or raw CSV text into the **IOC Input** field.
+2. Select the desired **Time Range**.
+3. Select the desired **Search Scope**.
+4. Click **Generate Searches**.
+5. Review the validation summary.
+6. Open the Traffic, DNS, or Web tab as appropriate.
+7. Copy the generated search into Splunk.
 
-Example input:
+When more than 50 search targets are present for a data model, the Workbench automatically creates multiple numbered searches.
 
+---
 
-185.193.127.12
-185.193.127.13
-evil-domain.com
+## Generated Searches
 
+### Network Traffic
 
-The application will generate:
+IP indicators generate searches against the `Network_Traffic` data model.
 
-- Network traffic searches for IP indicators
-- DNS searches for domain indicators
-- Web searches for domain indicators
+### DNS
+
+Domains, hostnames, and hostnames derived from URL indicators generate searches against the `Network_Resolution.DNS` data model.
+
+### Web
+
+Domain, hostname, and URL indicators generate searches against the `Web.Web` data model.
+
+In the default Search Scope, full URLs retain their path and port information where available so higher-fidelity indicators are searched before broader host-level pivots.
+
+---
+
+## Time Ranges
+
+The Workbench includes the following built-in ranges:
+
+- None
+- Last 15 minutes
+- Last 30 minutes
+- Last 24 hours
+- Last 7 days
+- Last 30 days
+- Last 90 days
+- Custom
+
+Custom ranges allow analysts to provide Splunk-compatible earliest and latest values.
+
+---
+
+## Project Structure
+
+```text
+splunk-ioc-workbench/
+├── index.html
+├── style.css
+├── app.js
+├── templates/
+│   ├── traffic-template.js
+│   ├── dns-template.js
+│   └── web-template.js
+├── LICENSE
+└── README.md
+```
+
+### `index.html`
+
+Defines the user interface and controls.
+
+### `style.css`
+
+Handles the visual layout and styling.
+
+### `app.js`
+
+Contains application logic including:
+
+- IOC parsing and refanging
+- CSV row handling
+- IOC classification and validation
+- URL normalization and hostname extraction
+- Deduplication
+- Search-scope handling
+- 50-indicator chunking
+- SPL generation
+- Tab and clipboard behavior
+
+### `templates/`
+
+Contains the Splunk search templates used to generate output.
+
+Templates use placeholders such as:
+
+```text
+{{IOC_LIST}}
+{{TIME_RANGE}}
+```
+
+The application replaces these placeholders with normalized indicator predicates and the selected time range.
 
 ---
 
 ## Editing Templates
 
-Templates are stored in the `templates/` directory.
+Templates are stored in the `templates/` directory and can be adjusted without rewriting the input or UI logic.
 
-Example:
-
-
-templates/traffic-template.js
-
-
-Each template file defines the SPL used to generate searches.
-
-Example snippet:
-
-
-All_Traffic.src IN ({{IOC_LIST}})
-
-
-The application replaces `{{IOC_LIST}}` with the formatted indicator list during search generation.
+The current templates target Splunk CIM data models for Network Traffic, DNS, and Web activity.
 
 ---
 
 ## Design Goals
 
-This project was designed with several goals in mind:
+The Workbench is intentionally small and focused. Its goals are to:
 
-- Reduce repetitive manual search creation
-- Provide a simple interface usable by analysts at any skill level
+- Reduce repetitive manual SPL creation
+- Preserve high-fidelity threat intelligence wherever possible
+- Make input handling transparent rather than silently dropping indicators
+- Keep the interface simple and approachable for analysts who were not involved in the tool's development
+- Produce readable, practical searches for real threat-hunting workflows
 - Keep the application transparent and auditable
-- Avoid complex dependencies or backend services
-- Ensure the tool can run in restricted or offline environments
+- Avoid backend services, external dependencies, and unnecessary platform complexity
+- Remain usable in restricted or offline environments
 
 ---
 
 ## Future Improvements
 
-Potential enhancements may include:
+Possible future enhancements include:
 
-- URL IOC support
-- File hash IOC support
-- Customizable time ranges
-- Additional Splunk data model support
-- Export options
-- Configurable templates
+- File-hash search support
+- Additional Splunk data models
+- Additional IOC types
+- Environment or client-specific search presets
+- Additional export options
+- Further template customization
+
+The project is intended to remain a lightweight analyst utility rather than become a full threat-intelligence platform.
 
 ---
 
