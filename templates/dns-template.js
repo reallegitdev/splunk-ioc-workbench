@@ -1,3 +1,16 @@
-window.DNS_TEMPLATE = `| tstats \`summariesonly\` count earliest(_time) as firstSeen latest(_time) as lastSeen values(sourcetype) as sourcetype, values(DNS.src_category) as src_category values(DNS.answer) as answer, values(DNS.reply_code) as reply_code, values(DNS.dest) as dest values(DNS.record_type) as record_type values(DNS.dest_category) as dest_category from datamodel=Network_Resolution.DNS where {{TIME_RANGE}} DNS.query IN ({{IOC_LIST}}) by DNS.query DNS.src
-| convert ctime(*Seen)
-| \`drop_dm_object_name(DNS)\``;
+window.DNS_TEMPLATE = `| tstats summariesonly=t count
+    min(_time) as first_seen
+    max(_time) as last_seen
+    values(DNS.answer) as answer
+    values(DNS.reply_code) as reply_code
+    values(DNS.record_type) as record_type
+    from datamodel=Network_Resolution.DNS
+    where
+    (
+{{IOC_LIST}}
+    )
+    {{TIME_RANGE}}
+    by DNS.query DNS.src DNS.dest
+| convert ctime(first_seen) ctime(last_seen)
+| rename DNS.query as query DNS.src as src DNS.dest as dest
+| sort - count`;
