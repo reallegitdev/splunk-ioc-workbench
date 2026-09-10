@@ -82,7 +82,3 @@ The SPL templates are kept separate from the application logic so they can be ad
 ## Security
 
 All parsing and SPL generation happens locally in the browser. The Workbench does not send IOC data to external services, run system commands, or modify local files.
-
-## Goal
-
-Keep IOC-driven Splunk hunting fast, simple, and transparent without turning the Workbench into a larger threat-intelligence platform.
