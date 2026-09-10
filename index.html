@@ -11,13 +11,13 @@
     <header class="topbar">
       <div>
         <h1>SPL IOC Workbench</h1>
-        <p class="subtitle">Generate Splunk searches from IP, domain, and URL IOCs</p>
+        <p class="subtitle">Generate Splunk searches from IP, domain, hostname, and URL IOCs</p>
       </div>
 
       <div class="status-wrap">
         <div id="detectedType" class="badge">Detected type: n/a</div>
         <div id="statusMessage" class="status">
-          Paste IPs, domains, and/or URLs, then click Generate Searches.
+          Paste IOCs or CSV rows, then click Generate Searches.
         </div>
       </div>
     </header>
@@ -26,7 +26,7 @@
       <section class="panel input-panel">
         <div class="panel-header">
           <h2>IOC Input</h2>
-          <span>One item per line</span>
+          <span>One item per line or Type,Value CSV rows</span>
         </div>
 
         <textarea
@@ -47,6 +47,18 @@
             <option value="earliest=-90d latest=now">Last 90 days</option>
             <option value="custom">Custom</option>
           </select>
+        </div>
+
+        <div class="control-row">
+          <label for="matchMode"><strong>Matching</strong></label>
+          <select id="matchMode">
+            <option value="high_fidelity" selected>High fidelity</option>
+            <option value="include_broad">High fidelity + broader Web pivots</option>
+            <option value="broad">Broad host/domain matching</option>
+          </select>
+          <span class="field-help">
+            High fidelity keeps full URL paths for Web searches and exact host/domain queries for DNS.
+          </span>
         </div>
 
         <div id="customTimeRangeFields" class="custom-time-range hidden">
@@ -75,11 +87,20 @@
         </div>
 
         <div class="summary-box">
-          <div><strong>Total:</strong> <span id="totalCount">0</span></div>
+          <div><strong>Input lines:</strong> <span id="totalCount">0</span></div>
           <div><strong>IPs:</strong> <span id="ipCount">0</span></div>
-          <div><strong>Domains:</strong> <span id="domainCount">0</span></div>
+          <div><strong>Domains/Hosts:</strong> <span id="domainCount">0</span></div>
+          <div><strong>URLs:</strong> <span id="urlCount">0</span></div>
+          <div><strong>Unsupported:</strong> <span id="unsupportedCount">0</span></div>
+          <div><strong>Duplicates:</strong> <span id="duplicateCount">0</span></div>
+          <div><strong>Rejected:</strong> <span id="rejectedCount">0</span></div>
           <div><strong>Range:</strong> <span id="selectedRangeLabel">Last 30 minutes</span></div>
         </div>
+
+        <details class="validation-details">
+          <summary>Validation details</summary>
+          <pre id="validationReport">Generate searches to see normalization and validation details.</pre>
+        </details>
       </section>
 
       <section class="panel output-panel">
@@ -90,27 +111,15 @@
         </div>
 
         <div class="tab-panel active" id="trafficPanel">
-          <div class="output-toolbar">
-            <span>Traffic Search</span>
-            <button class="secondary" data-copy-target="trafficOutput">Copy Traffic</button>
-          </div>
-          <textarea id="trafficOutput" readonly spellcheck="false"></textarea>
+          <div id="trafficOutput" class="search-list"></div>
         </div>
 
         <div class="tab-panel" id="dnsPanel">
-          <div class="output-toolbar">
-            <span>DNS Search</span>
-            <button class="secondary" data-copy-target="dnsOutput">Copy DNS</button>
-          </div>
-          <textarea id="dnsOutput" readonly spellcheck="false"></textarea>
+          <div id="dnsOutput" class="search-list"></div>
         </div>
 
         <div class="tab-panel" id="webPanel">
-          <div class="output-toolbar">
-            <span>Web Search</span>
-            <button class="secondary" data-copy-target="webOutput">Copy Web</button>
-          </div>
-          <textarea id="webOutput" readonly spellcheck="false"></textarea>
+          <div id="webOutput" class="search-list"></div>
         </div>
       </section>
     </main>
