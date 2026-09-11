@@ -166,9 +166,11 @@ button.secondary:hover {
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-.tab {
+.tab,
+.experimental-tab {
   background: var(--panel-2);
   color: var(--text);
   border-color: var(--border);
@@ -177,6 +179,11 @@ button.secondary:hover {
 .tab.active {
   background: var(--accent);
   color: #082f49;
+}
+
+.experimental-tab.active {
+  background: #f59e0b;
+  color: #451a03;
 }
 
 .tab-panel {
@@ -268,6 +275,49 @@ input {
   color: var(--muted);
   padding: 20px;
   text-align: center;
+}
+
+.experimental-note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  border: 1px solid #92400e;
+  background: #2a1a0a;
+  border-radius: 10px;
+}
+
+.experimental-note strong {
+  color: #fbbf24;
+}
+
+.experimental-note span,
+.experimental-section p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.experimental-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.experimental-section:first-of-type {
+  margin-top: 0;
+}
+
+.experimental-section h3 {
+  margin: 0 0 6px;
+}
+
+.experimental-section p {
+  margin: 0 0 14px;
+}
+
+.experimental-section code {
+  color: var(--text);
 }
 
 .hidden {
