@@ -17,6 +17,7 @@ It runs entirely in the browser with no backend, no installation, and no externa
 - Extracts hostnames from URLs for DNS searches
 - Splits large searches into chunks of up to 50 indicators
 - Supports preset and custom time ranges
+- Includes an Experimental tab for testing cross-environment hunt patterns without changing the standard searches
 
 ## Search Scope
 
@@ -60,6 +61,16 @@ The Workbench currently generates searches from IPs, domains/hostnames, and URLs
 
 If a search has more than 50 targets, the Workbench creates multiple numbered searches automatically.
 
+## Experimental
+
+The Experimental tab currently includes three IP-based traffic searches for cross-environment testing:
+
+- **Portable Traffic** — accelerated CIM search using a small set of commonly normalized fields
+- **Compatibility Traffic** — the same approach with non-accelerated CIM data included
+- **Raw Fallback Prototype** — tests several common raw field names and normalizes them with `coalesce()`
+
+These are test searches and are kept separate from the standard Traffic, DNS, and Web outputs.
+
 ## Validation
 
 The validation summary shows input counts, supported and unsupported IOC types, duplicates, rejected values, and the number of search targets left after normalization.
@@ -71,10 +82,12 @@ splunk-ioc-workbench/
 ├── index.html
 ├── style.css
 ├── app.js
+├── experimental.js
 ├── templates/
 │   ├── traffic-template.js
 │   ├── dns-template.js
-│   └── web-template.js
+│   ├── web-template.js
+│   └── experimental-template.js
 ├── LICENSE
 └── README.md
 ```
