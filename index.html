@@ -108,6 +108,7 @@
           <button class="tab active" data-tab="traffic">Traffic</button>
           <button class="tab" data-tab="dns">DNS</button>
           <button class="tab" data-tab="web">Web</button>
+          <button id="experimentalTab" class="experimental-tab">Experimental</button>
         </div>
 
         <div class="tab-panel active" id="trafficPanel">
@@ -121,6 +122,31 @@
         <div class="tab-panel" id="webPanel">
           <div id="webOutput" class="search-list"></div>
         </div>
+
+        <div class="tab-panel" id="experimentalPanel">
+          <div class="experimental-note">
+            <strong>Experimental</strong>
+            <span>These searches are intended for cross-environment testing. Validate results before using them as a standard hunt.</span>
+          </div>
+
+          <div class="experimental-section">
+            <h3>Portable Traffic</h3>
+            <p>Uses accelerated CIM data and keeps the search limited to commonly normalized fields. Optional context is returned with <code>values()</code>.</p>
+            <div id="experimentalPortableOutput" class="search-list"></div>
+          </div>
+
+          <div class="experimental-section">
+            <h3>Compatibility Traffic</h3>
+            <p>Uses the same portable CIM search but includes non-accelerated data with <code>summariesonly=f</code>.</p>
+            <div id="experimentalCompatOutput" class="search-list"></div>
+          </div>
+
+          <div class="experimental-section">
+            <h3>Raw Fallback Prototype</h3>
+            <p>Tests common raw field names and uses <code>coalesce()</code> to normalize source and destination fields. This is intentionally a fallback, not a replacement for CIM.</p>
+            <div id="experimentalRawOutput" class="search-list"></div>
+          </div>
+        </div>
       </section>
     </main>
   </div>
@@ -128,6 +154,8 @@
   <script src="templates/traffic-template.js"></script>
   <script src="templates/dns-template.js"></script>
   <script src="templates/web-template.js"></script>
+  <script src="templates/experimental-template.js"></script>
   <script src="app.js"></script>
+  <script src="experimental.js"></script>
 </body>
 </html>
