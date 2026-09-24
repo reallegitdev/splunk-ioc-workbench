@@ -1,4 +1,4 @@
-window.DNS_TEMPLATE = `| tstats summariesonly=t count
+window.DNS_TEMPLATE = `| tstats summariesonly=f count
     min(_time) as first_seen
     max(_time) as last_seen
     values(DNS.dest) as dest
