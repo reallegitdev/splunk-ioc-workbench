@@ -3,6 +3,7 @@ const experimentalPanel = document.getElementById("experimentalPanel");
 const experimentalPortableOutput = document.getElementById("experimentalPortableOutput");
 const experimentalCompatOutput = document.getElementById("experimentalCompatOutput");
 const experimentalRawOutput = document.getElementById("experimentalRawOutput");
+const experimentalFortigateDomainOutput = document.getElementById("experimentalFortigateDomainOutput");
 
 function experimentalChunk(items, size = 50) {
   const chunks = [];
@@ -38,15 +39,33 @@ function experimentalTimeRange() {
   return selected.value;
 }
 
-function experimentalExtractIps() {
-  if (typeof parseInput === "function") {
-    const parsed = parseInput(document.getElementById("iocInput").value);
-    return parsed.records
-      .filter((record) => record.type === "ip")
-      .map((record) => record.normalized);
-  }
+function experimentalParsedRecords() {
+  if (typeof parseInput !== "function") return [];
+  return parseInput(document.getElementById("iocInput").value).records;
+}
 
-  return [];
+function experimentalExtractIps() {
+  return experimentalParsedRecords()
+    .filter((record) => record.type === "ip")
+    .map((record) => record.normalized);
+}
+
+function experimentalExtractDomains() {
+  return [...new Set(
+    experimentalParsedRecords().flatMap((record) => {
+      if (record.type === "domain") return [record.normalized];
+      if (record.type === "url" && record.host) return [record.host];
+      return [];
+    })
+  )];
+}
+
+function experimentalDomainClauses(items) {
+  return items
+    .map((item, index) =>
+      `    ${index ? "OR " : ""}domain="*${item.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}*"`
+    )
+    .join("\n");
 }
 
 function experimentalCopy(text, label) {
@@ -61,13 +80,13 @@ function experimentalCopy(text, label) {
     });
 }
 
-function experimentalRenderChunks(container, searches, label) {
+function experimentalRenderChunks(container, searches, label, emptyMessage = "No IP indicators available for this experiment.") {
   container.innerHTML = "";
 
   if (!searches.length) {
     const empty = document.createElement("div");
     empty.className = "empty-output";
-    empty.textContent = "No IP indicators available for this experiment.";
+    empty.textContent = emptyMessage;
     container.appendChild(empty);
     return;
   }
@@ -102,6 +121,7 @@ function experimentalRenderChunks(container, searches, label) {
 
 function generateExperimentalSearches() {
   const ips = experimentalExtractIps();
+  const domains = experimentalExtractDomains();
   const timeRange = experimentalTimeRange();
 
   const portable = experimentalChunk(ips).map((items) =>
@@ -125,9 +145,22 @@ function generateExperimentalSearches() {
     })
   );
 
+  const fortigateDomain = experimentalChunk(domains).map((items) =>
+    experimentalRenderTemplate(window.EXPERIMENTAL_FORTIGATE_DOMAIN_TEMPLATE, {
+      DOMAIN_CLAUSES: experimentalDomainClauses(items),
+      TIME_RANGE: timeRange
+    })
+  );
+
   experimentalRenderChunks(experimentalPortableOutput, portable, "Portable Traffic");
   experimentalRenderChunks(experimentalCompatOutput, compatibility, "Compatibility Traffic");
   experimentalRenderChunks(experimentalRawOutput, rawFallback, "Raw Fallback Prototype");
+  experimentalRenderChunks(
+    experimentalFortigateDomainOutput,
+    fortigateDomain,
+    "Fortigate Domain Fallback",
+    "No domain or URL indicators available for this experiment."
+  );
 }
 
 function showExperimentalPanel() {
@@ -152,8 +185,20 @@ document.getElementById("clearBtn").addEventListener("click", () => {
   experimentalRenderChunks(experimentalPortableOutput, [], "Portable Traffic");
   experimentalRenderChunks(experimentalCompatOutput, [], "Compatibility Traffic");
   experimentalRenderChunks(experimentalRawOutput, [], "Raw Fallback Prototype");
+  experimentalRenderChunks(
+    experimentalFortigateDomainOutput,
+    [],
+    "Fortigate Domain Fallback",
+    "No domain or URL indicators available for this experiment."
+  );
 });
 
 experimentalRenderChunks(experimentalPortableOutput, [], "Portable Traffic");
 experimentalRenderChunks(experimentalCompatOutput, [], "Compatibility Traffic");
 experimentalRenderChunks(experimentalRawOutput, [], "Raw Fallback Prototype");
+experimentalRenderChunks(
+  experimentalFortigateDomainOutput,
+  [],
+  "Fortigate Domain Fallback",
+  "No domain or URL indicators available for this experiment."
+);
