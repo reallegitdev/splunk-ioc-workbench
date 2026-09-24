@@ -52,3 +52,19 @@ window.EXPERIMENTAL_RAW_TRAFFIC_TEMPLATE = `index=* {{TIME_RANGE}}
 | stats count min(_time) as first_seen max(_time) as last_seen values(dest_port) as dest_port values(action) as action values(app) as app values(rule) as rule values(sourcetype) as sourcetype by src dest
 | convert ctime(first_seen) ctime(last_seen)
 | sort - count`;
+
+window.EXPERIMENTAL_FORTIGATE_DOMAIN_TEMPLATE = `index=netfw sourcetype=fortigate_utm {{TIME_RANGE}}
+(
+{{DOMAIN_CLAUSES}}
+)
+| stats
+    count
+    min(_time) as first_seen
+    max(_time) as last_seen
+    values(dest) as dest
+    values(dest_port) as dest_port
+    values(action) as action
+    values(app) as app
+    by src domain
+| convert ctime(first_seen) ctime(last_seen)
+| sort - count`;
