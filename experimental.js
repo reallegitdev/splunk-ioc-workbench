@@ -4,6 +4,7 @@ const experimentalPortableOutput = document.getElementById("experimentalPortable
 const experimentalCompatOutput = document.getElementById("experimentalCompatOutput");
 const experimentalRawOutput = document.getElementById("experimentalRawOutput");
 const experimentalFortigateDomainOutput = document.getElementById("experimentalFortigateDomainOutput");
+const experimentalCrowdstrikeHashOutput = document.getElementById("experimentalCrowdstrikeHashOutput");
 
 function experimentalChunk(items, size = 50) {
   const chunks = [];
@@ -68,6 +69,20 @@ function experimentalDomainClauses(items) {
     .join("\n");
 }
 
+function experimentalExtractHashes() {
+  return experimentalParsedRecords()
+    .filter((record) => ["md5", "sha1", "sha256"].includes(record.type))
+    .map((record) => record.normalized);
+}
+
+function experimentalHashClauses(items) {
+  return items
+    .map((item, index) =>
+      `    ${index ? "OR " : ""}"${item.replace(/"/g, '\\"')}"`
+    )
+    .join("\n");
+}
+
 function experimentalCopy(text, label) {
   navigator.clipboard.writeText(text)
     .then(() => {
@@ -122,6 +137,7 @@ function experimentalRenderChunks(container, searches, label, emptyMessage = "No
 function generateExperimentalSearches() {
   const ips = experimentalExtractIps();
   const domains = experimentalExtractDomains();
+  const hashes = experimentalExtractHashes();
   const timeRange = experimentalTimeRange();
 
   const portable = experimentalChunk(ips).map((items) =>
@@ -152,6 +168,13 @@ function generateExperimentalSearches() {
     })
   );
 
+  const crowdstrikeHash = experimentalChunk(hashes).map((items) =>
+    experimentalRenderTemplate(window.EXPERIMENTAL_CROWDSTRIKE_HASH_TEMPLATE, {
+      HASH_CLAUSES: experimentalHashClauses(items),
+      TIME_RANGE: timeRange
+    })
+  );
+
   experimentalRenderChunks(experimentalPortableOutput, portable, "Portable Traffic");
   experimentalRenderChunks(experimentalCompatOutput, compatibility, "Compatibility Traffic");
   experimentalRenderChunks(experimentalRawOutput, rawFallback, "Raw Fallback Prototype");
@@ -160,6 +183,12 @@ function generateExperimentalSearches() {
     fortigateDomain,
     "Fortigate Domain Fallback",
     "No domain or URL indicators available for this experiment."
+  );
+  experimentalRenderChunks(
+    experimentalCrowdstrikeHashOutput,
+    crowdstrikeHash,
+    "CrowdStrike Hash Check",
+    "No MD5, SHA1, or SHA256 indicators available for this experiment."
   );
 }
 
@@ -191,6 +220,12 @@ document.getElementById("clearBtn").addEventListener("click", () => {
     "Fortigate Domain Fallback",
     "No domain or URL indicators available for this experiment."
   );
+  experimentalRenderChunks(
+    experimentalCrowdstrikeHashOutput,
+    [],
+    "CrowdStrike Hash Check",
+    "No MD5, SHA1, or SHA256 indicators available for this experiment."
+  );
 });
 
 experimentalRenderChunks(experimentalPortableOutput, [], "Portable Traffic");
@@ -201,4 +236,10 @@ experimentalRenderChunks(
   [],
   "Fortigate Domain Fallback",
   "No domain or URL indicators available for this experiment."
+);
+experimentalRenderChunks(
+  experimentalCrowdstrikeHashOutput,
+  [],
+  "CrowdStrike Hash Check",
+  "No MD5, SHA1, or SHA256 indicators available for this experiment."
 );
