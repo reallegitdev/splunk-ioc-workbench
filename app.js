@@ -19,6 +19,7 @@ const totalCount = document.getElementById("totalCount");
 const ipCount = document.getElementById("ipCount");
 const domainCount = document.getElementById("domainCount");
 const urlCount = document.getElementById("urlCount");
+const hashCount = document.getElementById("hashCount");
 const unsupportedCount = document.getElementById("unsupportedCount");
 const duplicateCount = document.getElementById("duplicateCount");
 const rejectedCount = document.getElementById("rejectedCount");
@@ -480,12 +481,16 @@ function updateValidationSummary(parsed, searchInfo = null) {
   const ips = records.filter((record) => record.type === "ip");
   const domains = records.filter((record) => record.type === "domain");
   const urls = records.filter((record) => record.type === "url");
-  const unsupported = records.filter((record) => !record.searchable);
+  const hashes = records.filter((record) => ["md5", "sha1", "sha256"].includes(record.type));
+  const unsupported = records.filter((record) =>
+    !record.searchable && !["md5", "sha1", "sha256"].includes(record.type)
+  );
 
   totalCount.textContent = String(parsed.sourceLines);
   ipCount.textContent = String(ips.length);
   domainCount.textContent = String(domains.length);
   urlCount.textContent = String(urls.length);
+  hashCount.textContent = String(hashes.length);
   unsupportedCount.textContent = String(unsupported.length);
   duplicateCount.textContent = String(parsed.duplicates.length);
   rejectedCount.textContent = String(parsed.rejected.length);
@@ -498,7 +503,8 @@ function updateValidationSummary(parsed, searchInfo = null) {
   const report = [];
   report.push(`Input lines: ${parsed.sourceLines}`);
   report.push(`Recognized: ${records.length}`);
-  report.push(`Searchable now: ${ips.length + domains.length + urls.length}`);
+  report.push(`Standard-tab searchable: ${ips.length + domains.length + urls.length}`);
+  report.push(`Experimental hash targets: ${hashes.length}`);
   report.push(`Duplicates removed: ${parsed.duplicates.length}`);
   report.push(`Recognized but unsupported: ${unsupported.length}`);
   report.push(`Rejected: ${parsed.rejected.length}`);
@@ -516,7 +522,7 @@ function updateValidationSummary(parsed, searchInfo = null) {
     report.push("");
     report.push("Unsupported recognized types:");
     Object.entries(typeCounts)
-      .filter(([type]) => !["ip", "domain", "url"].includes(type))
+      .filter(([type]) => !["ip", "domain", "url", "md5", "sha1", "sha256"].includes(type))
       .forEach(([type, count]) => report.push(`  ${type}: ${count}`));
   }
 
@@ -547,7 +553,8 @@ function updateValidationSummary(parsed, searchInfo = null) {
   const searchableTypes = [
     ips.length ? "IP" : null,
     domains.length ? "domain/host" : null,
-    urls.length ? "URL" : null
+    urls.length ? "URL" : null,
+    hashes.length ? "hash (Experimental)" : null
   ].filter(Boolean);
 
   detectedType.textContent = searchableTypes.length
@@ -634,6 +641,7 @@ function clearAll() {
   ipCount.textContent = "0";
   domainCount.textContent = "0";
   urlCount.textContent = "0";
+  hashCount.textContent = "0";
   unsupportedCount.textContent = "0";
   duplicateCount.textContent = "0";
   rejectedCount.textContent = "0";

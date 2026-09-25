@@ -91,6 +91,7 @@
           <div><strong>IPs:</strong> <span id="ipCount">0</span></div>
           <div><strong>Domains/Hosts:</strong> <span id="domainCount">0</span></div>
           <div><strong>URLs:</strong> <span id="urlCount">0</span></div>
+          <div><strong>Hashes:</strong> <span id="hashCount">0</span></div>
           <div><strong>Unsupported:</strong> <span id="unsupportedCount">0</span></div>
           <div><strong>Duplicates:</strong> <span id="duplicateCount">0</span></div>
           <div><strong>Rejected:</strong> <span id="rejectedCount">0</span></div>
@@ -151,6 +152,12 @@
             <h3>Fortigate Domain Fallback</h3>
             <p>Searches Fortigate UTM domain observations when CIM DNS data is unavailable. This is network-observation telemetry, not a DNS resolver query.</p>
             <div id="experimentalFortigateDomainOutput" class="search-list"></div>
+          </div>
+
+          <div class="experimental-section">
+            <h3>CrowdStrike Hash Check</h3>
+            <p>Searches CrowdStrike Event Streams for MD5, SHA1, and SHA256 indicators. A clean result means no CrowdStrike event or detection referenced the supplied hashes; it does not prove the files never existed on an endpoint.</p>
+            <div id="experimentalCrowdstrikeHashOutput" class="search-list"></div>
           </div>
         </div>
       </section>
