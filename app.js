@@ -292,7 +292,7 @@ function getWebTargets(records, mode) {
       });
   }
 
-  const targets = urls.map((record) => ({ kind: "url", value: record.webTarget }));
+  const targets = urls.map((record) => ({ kind: "url", value: record.normalized }));
 
   domains.forEach((record) => {
     if (!urlHosts.has(record.normalized)) {
@@ -302,7 +302,7 @@ function getWebTargets(records, mode) {
 
   if (mode === "include_broad") {
     urls.forEach((record) => {
-      targets.push({ kind: "host", value: record.host });
+      targets.push({ kind: "broad_host", value: record.host });
     });
   }
 
@@ -324,11 +324,16 @@ function formatDnsItems(items, broad) {
     .join("\n");
 }
 
-function formatWebItems(items) {
+function formatWebItems(items, mode) {
   return items
-    .map((item, index) =>
-      `        ${index ? "OR " : ""}Web.url="*${escapeSplString(item.value)}*"`
-    )
+    .map((item, index) => {
+      // Exact domains use the CIM hostname field; full URLs use the URL field.
+      // Related-host and broad searches intentionally use wildcard URL matching.
+      const broad = mode === "broad" || item.kind === "broad_host";
+      const field = broad || item.kind === "url" ? "Web.url" : "Web.url_domain";
+      const target = broad ? `*${item.value}*` : item.value;
+      return `        ${index ? "OR " : ""}${field}="${escapeSplString(target)}"`;
+    })
     .join("\n");
 }
 
@@ -371,7 +376,7 @@ function buildSearches(records, timeConfig, mode) {
 
   const webSearches = chunk(webTargets).map((items) =>
     renderTemplate(window.WEB_TEMPLATE, {
-      IOC_LIST: formatWebItems(items),
+      IOC_LIST: formatWebItems(items, mode),
       TIME_RANGE: timeConfig.clause
     })
   );
