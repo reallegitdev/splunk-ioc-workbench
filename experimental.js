@@ -60,11 +60,12 @@ function experimentalExtractDomains() {
   )];
 }
 
-function experimentalDomainClauses(items) {
+function experimentalDomainClauses(items, broad) {
   return items
-    .map((item, index) =>
-      `    ${index ? "OR " : ""}domain="*${item.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}*"`
-    )
+    .map((item, index) => {
+      const target = broad ? `*${item}*` : item;
+      return `    ${index ? "OR " : ""}domain="${escapeSplString(target)}"`;
+    })
     .join("\n");
 }
 
@@ -123,6 +124,7 @@ function generateExperimentalSearches() {
   const ips = experimentalExtractIps();
   const domains = experimentalExtractDomains();
   const timeRange = experimentalTimeRange();
+  const broadDomains = document.getElementById("matchMode").value === "broad";
 
   const portable = experimentalChunk(ips).map((items) =>
     experimentalRenderTemplate(window.EXPERIMENTAL_PORTABLE_TRAFFIC_TEMPLATE, {
@@ -147,7 +149,7 @@ function generateExperimentalSearches() {
 
   const fortigateDomain = experimentalChunk(domains).map((items) =>
     experimentalRenderTemplate(window.EXPERIMENTAL_FORTIGATE_DOMAIN_TEMPLATE, {
-      DOMAIN_CLAUSES: experimentalDomainClauses(items),
+      DOMAIN_CLAUSES: experimentalDomainClauses(items, broadDomains),
       TIME_RANGE: timeRange
     })
   );
