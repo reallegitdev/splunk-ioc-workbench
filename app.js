@@ -279,7 +279,6 @@ function getDnsTargets(records) {
 function getWebTargets(records, mode) {
   const urls = records.filter((record) => record.type === "url");
   const domains = records.filter((record) => record.type === "domain");
-  const urlHosts = new Set(urls.map((record) => record.host));
 
   if (mode === "broad") {
     return unique([
@@ -294,10 +293,9 @@ function getWebTargets(records, mode) {
 
   const targets = urls.map((record) => ({ kind: "url", value: record.normalized }));
 
+  // A domain IOC remains independently searchable even when a URL IOC uses that host.
   domains.forEach((record) => {
-    if (!urlHosts.has(record.normalized)) {
-      targets.push({ kind: "host", value: record.normalized });
-    }
+    targets.push({ kind: "host", value: record.normalized });
   });
 
   if (mode === "include_broad") {
