@@ -68,3 +68,43 @@ window.EXPERIMENTAL_FORTIGATE_DOMAIN_TEMPLATE = `index=netfw sourcetype=fortigat
     by src domain
 | convert ctime(first_seen) ctime(last_seen)
 | sort - count`;
+
+
+window.EXPERIMENTAL_CROWDSTRIKE_HASH_TEMPLATE = `index=crowdstrike sourcetype="CrowdStrike:Event:Streams:JSON" {{TIME_RANGE}}
+(
+{{HASH_CLAUSES}}
+)
+| eval matched_hash=coalesce(
+    'event.SHA256String',
+    'event.SHA1String',
+    'event.MD5String',
+    file_hash,
+    'event.IOCValue',
+    'event.QuarantineFiles{}.SHA256HashData'
+)
+| eval matched_file=coalesce(
+    'event.FileName',
+    file_name,
+    process_name,
+    original_file_name,
+    'event.AssociatedFile',
+    'event.QuarantineFiles{}.ImageFileName'
+)
+| eval matched_path=coalesce(
+    'event.FilePath',
+    file_path,
+    process_path
+)
+| table _time
+    event.Hostname
+    event.UserName
+    matched_file
+    matched_path
+    matched_hash
+    event.CommandLine
+    event.ParentImageFileName
+    event.Name
+    event.Description
+    event.SeverityName
+    action
+| sort 0 - _time`;
